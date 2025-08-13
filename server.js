@@ -1,157 +1,204 @@
-// server.js
+require('dotenv').config();
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 const bodyParser = require('body-parser');
-const app = express();
 const path = require('path');
 
-// Настройка приложения
+const app = express();
+
+// Middleware
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Подключение к базе данных
-const db = new sqlite3.Database('./database.db', (err) => {
-    if (err) {
-        console.error('Ошибка подключения к базе данных:', err.message);
-    } else {
-        console.log('Подключено к SQLite базе данных');
+// Подключение к PostgreSQL
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+// Инициализация базы данных
+async function initializeDatabase() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS admins (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        username TEXT NOT NULL UNIQUE,
+        role TEXT,
+        added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS blocked_ips (
+        id SERIAL PRIMARY KEY,
+        ip TEXT NOT NULL UNIQUE,
+        reason TEXT,
+        blocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS visit_logs (
+        id SERIAL PRIMARY KEY,
+        ip TEXT NOT NULL,
+        user_agent TEXT,
+        page TEXT,
+        visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Добавляем стандартного админа
+    const { rows } = await pool.query("SELECT * FROM users WHERE username = 'admin'");
+    if (rows.length === 0) {
+      await pool.query("INSERT INTO users (username, password) VALUES ('admin', 'qwerqwer')");
     }
+  } catch (err) {
+    console.error('Ошибка инициализации БД:', err);
+  }
+}
+
+// API для администраторов
+app.get('/api/admins', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM admins ORDER BY name');
+    res.json(rows);
+  } catch (err) {
+    console.error('Ошибка получения админов:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
-// Логирование посещений
-app.post('/log-visit', (req, res) => {
-    const { ip, userAgent, page } = req.body;
-    
-    db.run(
-        'INSERT INTO visit_logs (ip, user_agent, page) VALUES (?, ?, ?)',
-        [ip || req.ip, userAgent, page],
-        (err) => {
-            if (err) {
-                console.error('Ошибка логирования:', err);
-                return res.status(500).send('Ошибка логирования');
-            }
-            res.sendStatus(200);
-        }
+app.post('/api/admins', async (req, res) => {
+  const { name, username, role } = req.body;
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO admins (name, username, role) VALUES ($1, $2, $3) RETURNING *',
+      [name, username, role || 'Модератор']
     );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Ошибка добавления админа:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
-// Получение списка администраторов
-app.get('/api/admins', (req, res) => {
-    db.all('SELECT * FROM admins ORDER BY name', [], (err, rows) => {
-        if (err) {
-            console.error('Ошибка получения администраторов:', err);
-            return res.status(500).send('Ошибка сервера');
-        }
-        res.json(rows);
-    });
+app.delete('/api/admins/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query('DELETE FROM admins WHERE id = $1', [id]);
+    res.json({ success: true, changes: rowCount });
+  } catch (err) {
+    console.error('Ошибка удаления админа:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
-// Добавление администратора
-app.post('/api/admins', (req, res) => {
-    const { name, username, role } = req.body;
-    
-    db.run(
-        'INSERT INTO admins (name, username, role) VALUES (?, ?, ?)',
-        [name, username, role],
-        function(err) {
-            if (err) {
-                console.error('Ошибка добавления администратора:', err);
-                return res.status(500).send('Ошибка сервера');
-            }
-            res.json({ id: this.lastID });
-        }
+// API для IP
+app.get('/api/blocked-ips', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM blocked_ips ORDER BY blocked_at DESC');
+    res.json(rows);
+  } catch (err) {
+    console.error('Ошибка получения IP:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/blocked-ips', async (req, res) => {
+  const { ip, reason } = req.body;
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO blocked_ips (ip, reason) VALUES ($1, $2) RETURNING *',
+      [ip, reason]
     );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Ошибка блокировки IP:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
-// Удаление администратора
-app.delete('/api/admins/:id', (req, res) => {
-    const { id } = req.params;
-    
-    db.run('DELETE FROM admins WHERE id = ?', [id], function(err) {
-        if (err) {
-            console.error('Ошибка удаления администратора:', err);
-            return res.status(500).send('Ошибка сервера');
-        }
-        res.json({ changes: this.changes });
-    });
+app.delete('/api/blocked-ips/:ip', async (req, res) => {
+  const { ip } = req.params;
+  try {
+    const { rowCount } = await pool.query('DELETE FROM blocked_ips WHERE ip = $1', [ip]);
+    res.json({ success: true, changes: rowCount });
+  } catch (err) {
+    console.error('Ошибка разблокировки IP:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
-// Получение заблокированных IP
-app.get('/api/blocked-ips', (req, res) => {
-    db.all('SELECT * FROM blocked_ips ORDER BY blocked_at DESC', [], (err, rows) => {
-        if (err) {
-            console.error('Ошибка получения IP:', err);
-            return res.status(500).send('Ошибка сервера');
-        }
-        res.json(rows);
-    });
-});
+// Логирование
+app.post('/log-visit', async (req, res) => {
+  const ip = req.ip.replace('::ffff:', '');
+  const userAgent = req.get('User-Agent');
+  const { page } = req.body;
 
-// Блокировка IP
-app.post('/api/blocked-ips', (req, res) => {
-    const { ip, reason } = req.body;
-    
-    db.run(
-        'INSERT INTO blocked_ips (ip, reason) VALUES (?, ?)',
-        [ip, reason],
-        function(err) {
-            if (err) {
-                console.error('Ошибка блокировки IP:', err);
-                return res.status(500).send('Ошибка сервера');
-            }
-            res.json({ id: this.lastID });
-        }
+  try {
+    await pool.query(
+      'INSERT INTO visit_logs (ip, user_agent, page) VALUES ($1, $2, $3)',
+      [ip, userAgent, page || 'main.html']
     );
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Ошибка логирования:', err);
+    res.sendStatus(500);
+  }
 });
 
-// Разблокировка IP
-app.delete('/api/blocked-ips/:ip', (req, res) => {
-    const { ip } = req.params;
-    
-    db.run('DELETE FROM blocked_ips WHERE ip = ?', [ip], function(err) {
-        if (err) {
-            console.error('Ошибка разблокировки IP:', err);
-            return res.status(500).send('Ошибка сервера');
-        }
-        res.json({ changes: this.changes });
-    });
-});
-
-// Получение логов посещений
-app.get('/api/visit-logs', (req, res) => {
-    db.all('SELECT * FROM visit_logs ORDER BY visited_at DESC LIMIT 100', [], (err, rows) => {
-        if (err) {
-            console.error('Ошибка получения логов:', err);
-            return res.status(500).send('Ошибка сервера');
-        }
-        res.json(rows);
-    });
+app.get('/api/visit-logs', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM visit_logs ORDER BY visited_at DESC LIMIT 100'
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Ошибка получения логов:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // Аутентификация
-app.post('/api/login', (req, res) => {
-    const { username, password } = req.body;
-    
-    db.get(
-        'SELECT * FROM users WHERE username = ? AND password = ?',
-        [username, password],
-        (err, row) => {
-            if (err) {
-                console.error('Ошибка аутентификации:', err);
-                return res.status(500).send('Ошибка сервера');
-            }
-            
-            if (row) {
-                res.json({ success: true });
-            } else {
-                res.status(401).json({ success: false, message: 'Неверные учетные данные' });
-            }
-        }
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM users WHERE username = $1 AND password = $2',
+      [username, password]
     );
+    if (rows.length > 0) {
+      res.json({ success: true });
+    } else {
+      res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+  } catch (err) {
+    console.error('Ошибка аутентификации:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
-// Запуск сервера
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Сервер запущен на порту ${PORT}`);
+// Статические файлы
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Инициализация и запуск
+initializeDatabase().then(() => {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 });
