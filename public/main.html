@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Развлекательный сайт</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">PrankVZ</div>
+        <nav>
+            <ul>
+                <li><a href="#" class="tab-link active" data-tab="tab1">Главная</a></li>
+                <li><a href="#" class="tab-link" data-tab="tab2">Ссылки</a></li>
+                <li><a href="#" class="tab-link" data-tab="tab3">Администраторы</a></li>
+                <li><a href="#" class="tab-link" data-tab="tab4">Сюрприз</a></li>
+            </ul>
+        </nav>
+        <div class="auth">
+            <button id="login-btn">Вход</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Вкладка 1: Главная -->
+        <div id="tab1" class="tab-content active">
+            <div class="content-box">
+                <h2>Добро пожаловать на наш развлекательный сайт!</h2>
+                <p>Здесь вы найдете множество интересных материалов и ссылок. Присоединяйтесь к нашему Telegram-каналу, чтобы быть в курсе всех обновлений!</p>
+                <a href="https://t.me/PrankVZ" class="tg-btn" target="_blank">Перейти в Telegram</a>
+            </div>
+        </div>
+
+        <!-- Вкладка 2: Ссылки -->
+        <div id="tab2" class="tab-content">
+            <div class="content-box">
+                <h2>Полезные ссылки</h2>
+                <div class="button-grid">
+                    <button class="link-btn" onclick="window.open('https://example.com/link1', '_blank')">Кнопка 1</button>
+                    <button class="link-btn" onclick="window.open('https://example.com/link2', '_blank')">Кнопка 2</button>
+                    <button class="link-btn" onclick="window.open('https://example.com/link3', '_blank')">Кнопка 3</button>
+                    <button class="link-btn" onclick="window.open('https://example.com/link4', '_blank')">Кнопка 4</button>
+                    <button class="link-btn" onclick="window.open('https://example.com/link5', '_blank')">Кнопка 5</button>
+                    <button class="link-btn" onclick="window.open('https://example.com/link6', '_blank')">Кнопка 6</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка 3: Администраторы -->
+        <div id="tab3" class="tab-content">
+            <div class="content-box">
+                <h2>Администраторы Telegram-канала</h2>
+                <div id="admins-list" class="admins-list">
+                    <!-- Список админов будет загружен из базы данных -->
+                    <p>Загрузка списка администраторов...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка 4: Сюрприз -->
+        <div id="tab4" class="tab-content">
+            <div class="content-box">
+                <h2>Нажми на кнопку для сюрприза!</h2>
+                <button id="surprise-btn" class="surprise-btn">Нажми меня</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Попап для сюрприза -->
+    <div id="surprise-popup" class="popup">
+        <div class="popup-content">
+            <span class="close-popup">&times;</span>
+            <h3>Сюрприз!</h3>
+            <p>Это просто тестовое всплывающее окно. Надеемся, вам понравилось!</p>
+        </div>
+    </div>
+
+    <!-- Форма входа -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Вход в систему</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Логин:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Пароль:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="submit-btn">Войти</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

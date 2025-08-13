@@ -1,0 +1,36 @@
+-- Таблица администраторов
+CREATE TABLE admins (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    username TEXT NOT NULL,
+    role TEXT,
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Таблица заблокированных IP
+CREATE TABLE blocked_ips (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ip TEXT NOT NULL UNIQUE,
+    reason TEXT,
+    blocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Таблица логов посещений
+CREATE TABLE visit_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ip TEXT NOT NULL,
+    user_agent TEXT,
+    page TEXT,
+    visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Таблица пользователей (только для админа)
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Добавляем стандартного админа
+INSERT INTO users (username, password) VALUES ('admin', 'qwerqwer');

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-panel {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .admin-section {
+            margin-bottom: 2.5rem;
+        }
+        
+        .admin-section h2 {
+            color: #6e8efb;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .admin-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        .control-card {
+            background-color: #f9f9f9;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .control-card h3 {
+            margin-bottom: 1rem;
+            color: #555;
+        }
+        
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #666;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .admin-btn {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .admin-btn.danger {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+        }
+        
+        .logs-container {
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #f5f5f5;
+            padding: 1rem;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .log-entry {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Админ-панель</div>
+        <nav>
+            <ul>
+                <li><a href="main.html">Вернуться на сайт</a></li>
+                <li><a href="#" id="logout-btn">Выйти</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="admin-panel">
+        <div class="admin-section">
+            <h2>Управление администраторами</h2>
+            <div class="admin-controls">
+                <div class="control-card">
+                    <h3>Добавить администратора</h3>
+                    <form id="add-admin-form">
+                        <div class="form-group">
+                            <label for="admin-name">Имя:</label>
+                            <input type="text" id="admin-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="admin-username">Telegram username:</label>
+                            <input type="text" id="admin-username" required placeholder="@username">
+                        </div>
+                        <div class="form-group">
+                            <label for="admin-role">Роль:</label>
+                            <input type="text" id="admin-role" required>
+                        </div>
+                        <button type="submit" class="admin-btn">Добавить</button>
+                    </form>
+                </div>
+                
+                <div class="control-card">
+                    <h3>Удалить администратора</h3>
+                    <form id="remove-admin-form">
+                        <div class="form-group">
+                            <label for="admin-to-remove">Выберите администратора:</label>
+                            <select id="admin-to-remove" class="form-control" required>
+                                <option value="">-- Выберите --</option>
+                                <!-- Список будет заполнен JavaScript -->
+                            </select>
+                        </div>
+                        <button type="submit" class="admin-btn danger">Удалить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="admin-section">
+            <h2>Управление IP-адресами</h2>
+            <div class="admin-controls">
+                <div class="control-card">
+                    <h3>Заблокировать IP</h3>
+                    <form id="block-ip-form">
+                        <div class="form-group">
+                            <label for="ip-to-block">IP-адрес:</label>
+                            <input type="text" id="ip-to-block" required placeholder="192.168.1.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="block-reason">Причина:</label>
+                            <textarea id="block-reason"></textarea>
+                        </div>
+                        <button type="submit" class="admin-btn danger">Заблокировать</button>
+                    </form>
+                </div>
+                
+                <div class="control-card">
+                    <h3>Разблокировать IP</h3>
+                    <form id="unblock-ip-form">
+                        <div class="form-group">
+                            <label for="ip-to-unblock">Выберите IP:</label>
+                            <select id="ip-to-unblock" class="form-control" required>
+                                <option value="">-- Выберите --</option>
+                                <!-- Список будет заполнен JavaScript -->
+                            </select>
+                        </div>
+                        <button type="submit" class="admin-btn">Разблокировать</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="admin-section">
+            <h2>Логи посещений</h2>
+            <div class="logs-container" id="visits-log">
+                <!-- Логи будут загружены здесь -->
+                <p>Загрузка логов...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

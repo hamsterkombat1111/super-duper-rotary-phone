@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Развлекательный сайт</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .disclaimer {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            color: white;
+            text-align: center;
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        .disclaimer h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        
+        .disclaimer p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+        
+        .enter-btn {
+            background-color: #fff;
+            color: #6e8efb;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .enter-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            background-color: #f0f0f0;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        body {
+            background: linear-gradient(to right, #4776E6, #8E54E9);
+            font-family: 'Arial', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="disclaimer">
+        <h1>Внимание!</h1>
+        <p>Этот сайт создан исключительно в развлекательных целях. Мы не хотим никого оскорбить или унизить.</p>
+        <button class="enter-btn" onclick="enterSite()">Войти на сайт</button>
+    </div>
+
+    <script>
+        function enterSite() {
+            // Логирование посещения
+            fetch('/log-visit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    page: 'disclaimer'
+                })
+            });
+            
+            // Переход на основную страницу
+            window.location.href = 'main.html';
+        }
+    </script>
+</body>
+</html>
